@@ -1,6 +1,5 @@
 # Movie Recommendation Demo
 
-Demo-ready movie recommendation system for internship interviews.
 
 This repository is a cleaned and runnable demo version of the project. It keeps:
 
