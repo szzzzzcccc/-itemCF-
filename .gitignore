@@ -1,0 +1,24 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Python cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Runtime logs and transient state
+backend/app/runtime_jobs/
+airflow/logs/
+*.log
+
+# Local env
+.env
+
+# Local scratch
+tmp/
+temp/

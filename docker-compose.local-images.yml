@@ -1,0 +1,12 @@
+services:
+  frontend:
+    image: xiangmu-frontend:latest
+    build: null
+
+  backend:
+    image: xiangmu-backend:latest
+    build: null
+
+  airflow:
+    image: xiangmu-airflow:latest
+    build: null

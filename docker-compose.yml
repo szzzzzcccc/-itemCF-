@@ -1,0 +1,79 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5174:80"
+    volumes:
+      - ./frontend/static:/usr/share/nginx/html:ro
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: movie_rec
+      POSTGRES_USER: movie_user
+      POSTGRES_PASSWORD: movie_pass
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./:/workspace:ro
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U movie_user -d movie_rec"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: movie_rec
+      DB_USER: movie_user
+      DB_PASSWORD: movie_pass
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8002:8000"
+    volumes:
+      - ./backend/app:/app/app
+
+  airflow:
+    build:
+      context: ./airflow
+      dockerfile: Dockerfile
+    entrypoint: ["/bin/bash", "/opt/airflow/scripts/start_airflow.sh"]
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow_meta
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "True"
+      AIRFLOW__SCHEDULER__SCHEDULER_ZOMBIE_TASK_THRESHOLD: "1800"
+      AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "True"
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: movie_rec
+      DB_USER: movie_user
+      DB_PASSWORD: movie_pass
+      _AIRFLOW_WWW_USER_USERNAME: admin
+      _AIRFLOW_WWW_USER_PASSWORD: admin123
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8081:8080"
+    volumes:
+      - airflow_home:/opt/airflow
+      - ./airflow/dags:/opt/airflow/dags
+      - ./backend/app:/opt/airflow/app
+      - ./airflow/scripts:/opt/airflow/scripts:ro
+
+volumes:
+  postgres_data:
+  airflow_home:
